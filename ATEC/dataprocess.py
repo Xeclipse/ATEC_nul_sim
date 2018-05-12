@@ -10,6 +10,10 @@ jieba.add_word("外卖", freq=100000)
 jieba.add_word("闲鱼", freq=100000)
 
 
+csv_file = './data/atec_nlp_sim_train.csv'
+word_dic_file = './data/processed_data/word_dic.dic'
+corpus_save_file = './data/processed_data/corpus'
+
 class Pair:
     def __init__(self):
         self.id = -1
@@ -86,7 +90,7 @@ def save_freq_dic(freq_sta):
 
 def preprocess():
     corpus = []
-    with open('/Users/nali/PycharmProjects/MachineLearningLaboratory/ATEC/data/atec_nlp_sim_train.csv') as f:
+    with open(csv_file) as f:
         corpus = [Pair(line) for line in f.readlines()]
     freq_sta = Counter()
     for pair in corpus:
@@ -102,15 +106,15 @@ def preprocess():
         pair.index(index_dic)
         pair.padding(padding_len=25)
         pair.remove_same_word()
-    tp.saveDict(index_dic, '/Users/nali/PycharmProjects/MachineLearningLaboratory/ATEC/data/processed_data/word_dic.dic')
-    tp.savePickle(corpus,'/Users/nali/PycharmProjects/MachineLearningLaboratory/ATEC/data/processed_data/corpus')
+    tp.saveDict(index_dic, word_dic_file)
+    tp.savePickle(corpus,corpus_save_file)
 
-preprocess()
-corpus = tp.loadPickle('/Users/nali/PycharmProjects/MachineLearningLaboratory/ATEC/data/processed_data/corpus')
-
-with open('./cases.txt', 'w') as f:
-        for pair in corpus:
-            f.write(str(pair))
+# preprocess()
+# corpus = tp.loadPickle(corpus_save_file)
+#
+# with open('./cases.txt', 'w') as f:
+#         for pair in corpus:
+#             f.write(str(pair))
 
 # with open('./word_filtered.txt', 'w') as f:
 #     for pair in corpus:
