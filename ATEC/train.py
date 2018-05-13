@@ -14,7 +14,7 @@ tensorboard_path='./data/tensorboard'
 model_save_file='./data/mode_save/sum_word_embedding'
 
 
-# corpus = tp.loadPickle(corpus_save_file)
+corpus = tp.loadPickle(corpus_save_file)
 #
 # train_X = []
 # train_Y = []
@@ -142,18 +142,18 @@ def predict(test_X, test_Y):
             print '\tf1:', f1
         return results[0]
 
-train_X = tp.loadPickle('./train_X')
-train_Y = tp.loadPickle('./train_Y')
-train_X, train_Y = extra_train_data(train_X, train_Y, 1000000)
-train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
-train()
-# test_corpus = corpus[-2000:-1]
-# test_X=tp.loadPickle('./test_X')
-# test_Y=tp.loadPickle('./test_Y')
-# pred = predict(test_X, test_Y)
-# pred = [np.argmax(i) for i in pred]
-# label = [np.argmax(i) for i in test_Y]
-# with open('./error_cases_2','w') as f:
-#     for i in range(len(pred)):
-#         pred[i]!= label[i]
-#         f.write(str(test_corpus[i]))
+# train_X = tp.loadPickle('./train_X')
+# train_Y = tp.loadPickle('./train_Y')
+# train_X, train_Y = extra_train_data(train_X, train_Y, 1000000)
+# train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
+# train()
+test_corpus = corpus[-2000:-1]
+test_X=tp.loadPickle('./test_X')
+test_Y=tp.loadPickle('./test_Y')
+pred = predict(test_X, test_Y)
+pred = [np.argmax(i) for i in pred]
+label = [np.argmax(i) for i in test_Y]
+with open('./error_cases_2','w') as f:
+    for i in range(len(pred)):
+        pred[i]== label[i]
+        f.write(str(test_corpus[i]))
