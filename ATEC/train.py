@@ -1,5 +1,5 @@
 # coding:utf-8
-
+import random
 
 from dataprocess import Pair,csv_file, word_dic_file, corpus_save_file
 import utils.textProcess as tp
@@ -7,12 +7,15 @@ from NeuralNetworkUtils.utils.utils import split2Batches
 from model import embedding_sum_model, embedding_sum_model_square_distance
 import tensorflow as tf
 import numpy as np
+import random
+
+
 tensorboard_path='./data/tensorboard'
 model_save_file='./data/mode_save/sum_word_embedding'
 
 
 # corpus = tp.loadPickle(corpus_save_file)
-# #
+#
 # train_X = []
 # train_Y = []
 
@@ -62,66 +65,95 @@ def measure(TP, TN, FP, FN):
     else: f1 = 2 * precision * recall / (precision + recall)
     return acc,precision,recall,f1
 
+
+def extra_train_data(train_X, train_Y, count = 100000):
+    length = len(train_X)
+    for i in range(count):
+        f = random.randint(0, length)
+        s = random.randint(0, length)
+        if f!=s:
+            train_X.append([train_X[f][0], train_X[s][0]])
+            train_Y.append([1.0,0.0])
+    return train_X, train_Y
+
 index_dic = tp.loadPickle(word_dic_file)
 # train_X, train_Y = build_train_set()
-# # # train_Y = [[i] for i in train_Y]
+# # train_Y = [[i] for i in train_Y]
 # train_Y = tp.oneHotLabels(train_Y, 1)
-# train_X, train_Y, batch_num = split2Batches(20, train_X, train_Y)
-# train_X = [train_X[0]]
-# train_Y = [train_Y[0]]
-# tp.savePickle(train_X,'./tmpX')
-# tp.savePickle(train_Y,'./tmpY')
-X = tp.loadPickle('./tmpX')
-Y = tp.loadPickle('./tmpY')
-
-train_X = X[0:-100]
-train_Y = Y[0:-100]
-test_X = []
-for i in X[-100:-2]:
-    test_X.extend(i)
-test_Y = []
-for i in Y[-100:-2]:
-    test_Y.extend(i)
-print 'finish loading'
-batch_num=len(train_X)
-with tf.Session() as sess:
-    net = embedding_sum_model_square_distance(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=50)
+# test_X = train_X[-2000:-1]
+# test_Y = train_Y[-2000:-1]
+# train_X = train_X[0:-2000]
+# train_Y = train_Y[0:-2000]
+# tp.savePickle(train_X,'./train_X')
+# tp.savePickle(train_Y,'./train_Y')
+# tp.savePickle(test_X,'./test_X')
+# tp.savePickle(test_Y,'./test_Y')
 
 
-    sess.run(tf.global_variables_initializer())
-    summary = tf.summary.FileWriter(tensorboard_path)
-    summary.add_graph(sess.graph, global_step=1)
-    obop = tf.summary.merge_all()
-    for epoch in range(50):
-        sta = [0] * 5
-        for i in range(batch_num-20):
-            results = sess.run([net['loss'], net['opt'], net['pred']],
-                               feed_dict={net['x']: train_X[i], net['y']: train_Y[i]})
-            sta[0] += results[0]
-            mea = statistic_correct(results[2], train_Y[i])
-            for cnt in range(1, 5):
-                sta[cnt] += mea[cnt - 1]
-        ops = sess.run(obop)
-        summary.add_summary(ops, epoch)
-        acc,precision,recall, f1 =measure(sta[1],sta[2],sta[3],sta[4])
-        print 'epoch-> ',epoch,'loss:', 1.0 * sta[0] / batch_num
-        print '\tacc:', acc,
-        print '\tprecision:', precision,
-        print '\trecall:', recall,
-        print '\tf1:', f1
-    saver = tf.train.Saver()
-    saver.save(sess, model_save_file)
-
-def predict():
-
-    results = sess.run([net['pred']],
-                               feed_dict={net['x']: test_X})
-    a,b,c,d = statistic_correct(results[0], test_Y)
-    acc, precision, recall, f1 = measure(a,b,c,d)
-
-    print '\tacc:', acc,
-    print '\tprecision:', precision,
-    print '\trecall:', recall,
-    print '\tf1:', f1
 
 
+
+
+
+def train():
+    with tf.Session() as sess:
+        net = embedding_sum_model_square_distance(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=75)
+
+
+        sess.run(tf.global_variables_initializer())
+        summary = tf.summary.FileWriter(tensorboard_path)
+        summary.add_graph(sess.graph, global_step=1)
+        obop = tf.summary.merge_all()
+        for epoch in range(50):
+            sta = [0] * 5
+            for i in range(batch_num-1):
+                results = sess.run([net['loss'], net['opt'], net['pred']],
+                                   feed_dict={net['x']: train_X[i], net['y']: train_Y[i]})
+                sta[0] += results[0]
+                mea = statistic_correct(results[2], train_Y[i])
+                for cnt in range(1, 5):
+                    sta[cnt] += mea[cnt - 1]
+            ops = sess.run(obop)
+            summary.add_summary(ops, epoch)
+            acc,precision,recall, f1 =measure(sta[1],sta[2],sta[3],sta[4])
+            print 'epoch-> ',epoch,'loss:', 1.0 * sta[0] / batch_num
+            print '\tacc:', acc,
+            print '\tprecision:', precision,
+            print '\trecall:', recall,
+            print '\tf1:', f1
+        saver = tf.train.Saver()
+        saver.save(sess, model_save_file)
+
+def predict(test_X, test_Y):
+
+    with tf.Session() as sess:
+        net = embedding_sum_model_square_distance(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=75)
+        loader = tf.train.Saver()
+        loader.restore(sess,model_save_file)
+        results = sess.run([net['pred']],
+                                   feed_dict={net['x']: test_X})
+        if not test_Y is None:
+            a,b,c,d = statistic_correct(results[0], test_Y)
+            acc, precision, recall, f1 = measure(a,b,c,d)
+
+            print '\tacc:', acc,
+            print '\tprecision:', precision,
+            print '\trecall:', recall,
+            print '\tf1:', f1
+        return results[0]
+
+train_X = tp.loadPickle('./train_X')
+train_Y = tp.loadPickle('./train_Y')
+train_X, train_Y = extra_train_data(train_X, train_Y, 1000000)
+train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
+train()
+# test_corpus = corpus[-2000:-1]
+# test_X=tp.loadPickle('./test_X')
+# test_Y=tp.loadPickle('./test_Y')
+# pred = predict(test_X, test_Y)
+# pred = [np.argmax(i) for i in pred]
+# label = [np.argmax(i) for i in test_Y]
+# with open('./error_cases_2','w') as f:
+#     for i in range(len(pred)):
+#         pred[i]!= label[i]
+#         f.write(str(test_corpus[i]))

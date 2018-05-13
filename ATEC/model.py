@@ -68,9 +68,9 @@ def embedding_sum_model_square_distance(sen_dim, vocab_dim, word_dim):
     # sum_embedding ->[batch, 2, word_dim]
     sum_embedding = tf.reduce_sum(all_embedding, axis=2)
     # normalize_embedding->[batch, 2, word_dim]
-    # normalize_embedding = tf.nn.l2_normalize(sum_embedding, dim=1)
+    normalize_embedding = tf.nn.l2_normalize(sum_embedding, dim=1)
     # calc square distance
-    trans_embedding = tf.transpose(sum_embedding, perm=[1, 0, 2])
+    trans_embedding = tf.transpose(normalize_embedding, perm=[1, 0, 2])
     left_embedding = tf.slice(trans_embedding, [0, 0, 0], [1, -1, -1])
     right_embedding = tf.slice(trans_embedding, [1, 0, 0], [1, -1, -1])
     left_embedding = tf.reshape(left_embedding, [-1, word_dim])
