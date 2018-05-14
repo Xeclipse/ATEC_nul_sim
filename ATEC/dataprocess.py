@@ -42,9 +42,9 @@ class Pair:
         return self.cut_first_sen_filtered, self.cut_second_sen
 
     def index(self, index_dic):
-        self.index_first_sen = tp.indexSentence(sentence=self.cut_first_sen_filtered, dic=index_dic, addDict=False,
+        self.index_first_sen = tp.indexSentence(sentence=self.cut_first_sen, dic=index_dic, addDict=False,
                                                 unknownIndex=1)[0]
-        self.index_second_sen = tp.indexSentence(sentence=self.cut_second_sen_filtered, dic=index_dic, addDict=False,
+        self.index_second_sen = tp.indexSentence(sentence=self.cut_second_sen, dic=index_dic, addDict=False,
                                                  unknownIndex=1)[0]
         return self.index_first_sen, self.index_second_sen
 
@@ -66,17 +66,19 @@ class Pair:
         return self.remove_same_first_sen, self.remove_same_second_sen
 
     def padding(self, padding_len):
-        self.padding_index_first_sen = tp.padding(self.index_first_sen, 25)
-        self.padding_index_second_sen = tp.padding(self.index_second_sen, 25)
+        self.padding_index_first_sen = tp.padding(self.index_first_sen, padding_len)
+        self.padding_index_second_sen = tp.padding(self.index_second_sen, padding_len)
         return self.padding_index_first_sen, self.padding_index_second_sen
 
+    def char_spilt(self):
+        pass
     def __str__(self):
         ret =''
         ret += str(self.id)+'\n'
         ret += self.first_sen+'\n'
         ret += self.second_sen+'\n'
-        ret += u' '.join(self.cut_first_sen_filtered).encode('utf-8')+'\n'
-        ret += u' '.join(self.cut_second_sen_filtered).encode('utf-8')+'\n'
+        ret += u' '.join(self.cut_first_sen).encode('utf-8')+'\n'
+        ret += u' '.join(self.cut_second_sen).encode('utf-8')+'\n'
         ret += u' '.join(self.remove_same_first_sen).encode('utf-8') + '\n'
         ret += u' '.join(self.remove_same_second_sen).encode('utf-8') + '\n'
         ret += str(self.label)+'\n'

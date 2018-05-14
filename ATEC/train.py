@@ -4,7 +4,7 @@ import random
 from dataprocess import Pair,csv_file, word_dic_file, corpus_save_file
 import utils.textProcess as tp
 from NeuralNetworkUtils.utils.utils import split2Batches
-from model import embedding_sum_model, embedding_sum_model_square_distance
+from model import embedding_sum_model, embedding_sum_model_square_distance, embedding_sum_model_square_distance_v2
 import tensorflow as tf
 import numpy as np
 import random
@@ -14,7 +14,7 @@ tensorboard_path='./data/tensorboard'
 model_save_file='./data/mode_save/sum_word_embedding'
 
 
-# corpus = tp.loadPickle(corpus_save_file)
+
 #
 # train_X = []
 # train_Y = []
@@ -97,14 +97,14 @@ index_dic = tp.loadPickle(word_dic_file)
 
 def train():
     with tf.Session() as sess:
-        net = embedding_sum_model_square_distance(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=50)
+        net = embedding_sum_model_square_distance_v2(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=50)
 
 
         sess.run(tf.global_variables_initializer())
         summary = tf.summary.FileWriter(tensorboard_path)
         summary.add_graph(sess.graph, global_step=1)
         obop = tf.summary.merge_all()
-        for epoch in range(50):
+        for epoch in range(75):
             sta = [0] * 5
             for i in range(batch_num-1):
                 results = sess.run([net['loss'], net['opt'], net['pred']],
@@ -127,7 +127,7 @@ def train():
 def predict(test_X, test_Y):
 
     with tf.Session() as sess:
-        net = embedding_sum_model_square_distance(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=50)
+        net = embedding_sum_model_square_distance_v2(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=50)
         loader = tf.train.Saver()
         loader.restore(sess,model_save_file)
         results = sess.run([net['pred']],
@@ -162,17 +162,18 @@ def error_analysis(pred, label, test_corpus):
 
 # train_X = tp.loadPickle('./train_X')
 # train_Y = tp.loadPickle('./train_Y')
-# train_X, train_Y = extra_train_data(train_X, train_Y, 10000)
+# # train_X, train_Y = extra_train_data(train_X, train_Y, 10000)
 # train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
 # train()
-# test_corpus = corpus[-2000:-1]
-# test_X=tp.loadPickle('./test_X')
-# test_Y=tp.loadPickle('./test_Y')
-# pred = predict(test_X, test_Y)
-# pred = [np.argmax(i) for i in pred]
-# label = [np.argmax(i) for i in test_Y]
-# error_analysis(pred,label,test_corpus)
-
+corpus = tp.loadPickle(corpus_save_file)
+test_corpus = corpus[-2000:-1]
+test_X=tp.loadPickle('./test_X')
 test_Y=tp.loadPickle('./test_Y')
+pred = predict(test_X, test_Y)
+pred = [np.argmax(i) for i in pred]
 label = [np.argmax(i) for i in test_Y]
-print sum(label)
+error_analysis(pred,label,test_corpus)
+#
+# test_Y=tp.loadPickle('./test_Y')
+# label = [np.argmax(i) for i in test_Y]
+# print sum(label)
