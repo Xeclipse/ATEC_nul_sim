@@ -14,7 +14,7 @@ tensorboard_path='./data/tensorboard'
 model_save_file='./data/mode_save/sum_word_embedding'
 
 
-corpus = tp.loadPickle(corpus_save_file)
+# corpus = tp.loadPickle(corpus_save_file)
 #
 # train_X = []
 # train_Y = []
@@ -97,7 +97,7 @@ index_dic = tp.loadPickle(word_dic_file)
 
 def train():
     with tf.Session() as sess:
-        net = embedding_sum_model_square_distance(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=75)
+        net = embedding_sum_model_square_distance(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=50)
 
 
         sess.run(tf.global_variables_initializer())
@@ -127,7 +127,7 @@ def train():
 def predict(test_X, test_Y):
 
     with tf.Session() as sess:
-        net = embedding_sum_model_square_distance(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=75)
+        net = embedding_sum_model_square_distance(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=50)
         loader = tf.train.Saver()
         loader.restore(sess,model_save_file)
         results = sess.run([net['pred']],
@@ -142,18 +142,37 @@ def predict(test_X, test_Y):
             print '\tf1:', f1
         return results[0]
 
+def error_analysis(pred, label, test_corpus):
+    with open('./error_cases_TP','w') as f:
+        for i in range(len(pred)):
+            if pred[i] == label[i] and label[i]==1:
+                f.write(str(test_corpus[i]))
+    with open('./error_cases_TN','w') as f:
+        for i in range(len(pred)):
+            if pred[i] == label[i] and label[i]==0:
+                f.write(str(test_corpus[i]))
+    with open('./error_cases_FP','w') as f:
+        for i in range(len(pred)):
+            if pred[i] != label[i] and label[i]==0:
+                f.write(str(test_corpus[i]))
+    with open('./error_cases_FN','w') as f:
+        for i in range(len(pred)):
+            if pred[i] != label[i] and label[i]==1:
+                f.write(str(test_corpus[i]))
+
 # train_X = tp.loadPickle('./train_X')
 # train_Y = tp.loadPickle('./train_Y')
-# train_X, train_Y = extra_train_data(train_X, train_Y, 1000000)
+# train_X, train_Y = extra_train_data(train_X, train_Y, 10000)
 # train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
 # train()
-test_corpus = corpus[-2000:-1]
-test_X=tp.loadPickle('./test_X')
+# test_corpus = corpus[-2000:-1]
+# test_X=tp.loadPickle('./test_X')
+# test_Y=tp.loadPickle('./test_Y')
+# pred = predict(test_X, test_Y)
+# pred = [np.argmax(i) for i in pred]
+# label = [np.argmax(i) for i in test_Y]
+# error_analysis(pred,label,test_corpus)
+
 test_Y=tp.loadPickle('./test_Y')
-pred = predict(test_X, test_Y)
-pred = [np.argmax(i) for i in pred]
 label = [np.argmax(i) for i in test_Y]
-with open('./error_cases_2','w') as f:
-    for i in range(len(pred)):
-        pred[i]== label[i]
-        f.write(str(test_corpus[i]))
+print sum(label)
