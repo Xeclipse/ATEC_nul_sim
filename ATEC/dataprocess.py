@@ -73,6 +73,8 @@ class Pair:
     def __str__(self):
         ret =''
         ret += str(self.id)+'\n'
+        ret += self.first_sen+'\n'
+        ret += self.second_sen+'\n'
         ret += u' '.join(self.cut_first_sen_filtered).encode('utf-8')+'\n'
         ret += u' '.join(self.cut_second_sen_filtered).encode('utf-8')+'\n'
         ret += u' '.join(self.remove_same_first_sen).encode('utf-8') + '\n'

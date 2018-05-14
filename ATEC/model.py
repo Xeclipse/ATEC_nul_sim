@@ -133,3 +133,6 @@ def embedding_cnn_model(sen_dim, vocab_dim, word_dim):
     #     'pred': pred,
     #     'opt': optimizer
     # }
+
+def cnn_layer(inputs):
+    pass
