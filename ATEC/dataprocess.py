@@ -12,6 +12,7 @@ jieba.add_word("闲鱼", freq=100000)
 
 csv_file = './data/atec_nlp_sim_train.csv'
 word_dic_file = './data/processed_data/word_dic.dic'
+char_dic_file = './data/processed_data/char_dic.dic'
 corpus_save_file = './data/processed_data/corpus'
 
 class Pair:
@@ -42,9 +43,9 @@ class Pair:
         return self.cut_first_sen_filtered, self.cut_second_sen
 
     def index(self, index_dic):
-        self.index_first_sen = tp.indexSentence(sentence=self.cut_first_sen, dic=index_dic, addDict=False,
+        self.index_first_sen = tp.indexSentence(sentence=self.first_sen.decode('utf-8'), dic=index_dic, addDict=False,
                                                 unknownIndex=1)[0]
-        self.index_second_sen = tp.indexSentence(sentence=self.cut_second_sen, dic=index_dic, addDict=False,
+        self.index_second_sen = tp.indexSentence(sentence=self.second_sen.decode('utf-8'), dic=index_dic, addDict=False,
                                                  unknownIndex=1)[0]
         return self.index_first_sen, self.index_second_sen
 
@@ -99,8 +100,9 @@ def preprocess():
     freq_sta = Counter()
     for pair in corpus:
         pair.cut_word()
-        freq_sta.update(pair.cut_first_sen)
-        freq_sta.update(pair.cut_second_sen)
+        freq_sta.update(pair.first_sen.decode('utf-8'))
+        freq_sta.update(pair.second_sen.decode('utf-8'))
+    # freq_sta = tp.loadDict(char_dic_file)
     index_dic_items = [i for i in freq_sta.items() if i[1] > 5]
     index_dic = tp.items2Dic(index_dic_items)
     index_dic = tp.sortDicByKeyAndReindex(index_dic, startIndex=2)
@@ -108,13 +110,15 @@ def preprocess():
     for pair in corpus:
         pair.filter_by_freq(freq_sta)
         pair.index(index_dic)
-        pair.padding(padding_len=25)
+        pair.padding(padding_len=70)
         pair.remove_same_word()
-    tp.saveDict(index_dic, word_dic_file)
+    tp.saveDict(index_dic, char_dic_file)
     tp.savePickle(corpus,corpus_save_file)
+
 
 # preprocess()
 # corpus = tp.loadPickle(corpus_save_file)
+# debug = 0
 #
 # with open('./cases.txt', 'w') as f:
 #         for pair in corpus:
@@ -136,3 +140,10 @@ def preprocess():
 # items = sorted(len_counter.items(), key=lambda x:x[1], reverse=True)
 # for i in items:
 #     print i[0],'\t',i[1]
+
+# data=[]
+# for pair in corpus:
+#     data.append(pair.first_sen)
+#     data.append(pair.second_sen)
+# char_dic = tp.wordFrequency(data)
+# tp.saveDict(char_dic,char_dic_file)

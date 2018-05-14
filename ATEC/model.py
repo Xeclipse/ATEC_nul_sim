@@ -183,4 +183,4 @@ def embedding_cnn_model(sen_dim, vocab_dim, word_dim):
     # }
 
 def cnn_layer(inputs):
-    pass
+    tf.layers.conv1d(inputs,filters=40,kernel_size=5,strides=1,activation=tf.nn.relu,)

@@ -1,7 +1,7 @@
 # coding:utf-8
 import random
 
-from dataprocess import Pair,csv_file, word_dic_file, corpus_save_file
+from dataprocess import Pair,csv_file, word_dic_file, corpus_save_file, char_dic_file
 import utils.textProcess as tp
 from NeuralNetworkUtils.utils.utils import split2Batches
 from model import embedding_sum_model, embedding_sum_model_square_distance, embedding_sum_model_square_distance_v2
@@ -76,7 +76,8 @@ def extra_train_data(train_X, train_Y, count = 100000):
             train_Y.append([1.0,0.0])
     return train_X, train_Y
 
-index_dic = tp.loadPickle(word_dic_file)
+# corpus = tp.loadPickle(corpus_save_file)
+index_dic = tp.loadPickle(char_dic_file)
 # train_X, train_Y = build_train_set()
 # # train_Y = [[i] for i in train_Y]
 # train_Y = tp.oneHotLabels(train_Y, 1)
@@ -97,7 +98,7 @@ index_dic = tp.loadPickle(word_dic_file)
 
 def train():
     with tf.Session() as sess:
-        net = embedding_sum_model_square_distance_v2(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=50)
+        net = embedding_sum_model_square_distance_v2(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
 
 
         sess.run(tf.global_variables_initializer())
@@ -123,11 +124,12 @@ def train():
             print '\tf1:', f1
         saver = tf.train.Saver()
         saver.save(sess, model_save_file)
+        print 'model saved'
 
 def predict(test_X, test_Y):
 
     with tf.Session() as sess:
-        net = embedding_sum_model_square_distance_v2(sen_dim=25, vocab_dim=len(index_dic) + 2, word_dim=50)
+        net = embedding_sum_model_square_distance_v2(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
         loader = tf.train.Saver()
         loader.restore(sess,model_save_file)
         results = sess.run([net['pred']],
@@ -170,9 +172,9 @@ test_corpus = corpus[-2000:-1]
 test_X=tp.loadPickle('./test_X')
 test_Y=tp.loadPickle('./test_Y')
 pred = predict(test_X, test_Y)
-pred = [np.argmax(i) for i in pred]
-label = [np.argmax(i) for i in test_Y]
-error_analysis(pred,label,test_corpus)
+# pred = [np.argmax(i) for i in pred]
+# label = [np.argmax(i) for i in test_Y]
+# error_analysis(pred,label,test_corpus)
 #
 # test_Y=tp.loadPickle('./test_Y')
 # label = [np.argmax(i) for i in test_Y]
