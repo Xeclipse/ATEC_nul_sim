@@ -105,7 +105,7 @@ def train():
         summary = tf.summary.FileWriter(tensorboard_path)
         summary.add_graph(sess.graph, global_step=1)
         obop = tf.summary.merge_all()
-        for epoch in range(75):
+        for epoch in range(50):
             sta = [0] * 5
             for i in range(batch_num-1):
                 results = sess.run([net['loss'], net['opt'], net['pred']],
@@ -129,7 +129,7 @@ def train():
 def predict(test_X, test_Y):
 
     with tf.Session() as sess:
-        net = embedding_sum_model_square_distance_v2(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
+        net = embedding_cnn_model(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
         loader = tf.train.Saver()
         loader.restore(sess,model_save_file)
         results = sess.run([net['pred']],
@@ -172,13 +172,14 @@ def test():
     pred = [np.argmax(i) for i in pred]
     label = [np.argmax(i) for i in test_Y]
     error_analysis(pred,label,test_corpus)
-
+#
 train_X = tp.loadPickle('./train_X')
 train_Y = tp.loadPickle('./train_Y')
 # train_X, train_Y = extra_train_data(train_X, train_Y, 10000)
 train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
 train()
 
+# test()
 
 #
 # test_Y=tp.loadPickle('./test_Y')
