@@ -2,6 +2,7 @@
 import tensorflow as tf
 from tensorflow.contrib.layers import l2_regularizer
 
+
 def embedding_sum_model(sen_dim, vocab_dim, word_dim):
     x = tf.placeholder(dtype=tf.int32, shape=[None, 2, sen_dim], name="input")
     y = tf.placeholder(dtype=tf.float32, shape=[None, 2], name="label")
@@ -56,8 +57,8 @@ def embedding_sum_model_square_distance(sen_dim, vocab_dim, word_dim):
     # word_vector_table = tf.scatter_nd_update(word_vector_table,indices,assign_value)
     tf.summary.histogram(name='word_vector', values=word_vector_table)
 
-    no_info_vector = tf.slice(word_vector_table,[0,0],[2,-1])
-    loss_no_info = tf.reduce_sum(no_info_vector*no_info_vector)
+    no_info_vector = tf.slice(word_vector_table, [0, 0], [2, -1])
+    loss_no_info = tf.reduce_sum(no_info_vector * no_info_vector)
     # norm_word_embedding = tf.slice(word_vector_table,[2,0],[vocab_dim-2, word_dim])
     # norm_sub = tf.reduce_sum(norm_word_embedding*norm_word_embedding, 1)-1.0
     # loss_norm = tf.reduce_mean(norm_sub*norm_sub)
@@ -75,11 +76,11 @@ def embedding_sum_model_square_distance(sen_dim, vocab_dim, word_dim):
     right_embedding = tf.slice(trans_embedding, [1, 0, 0], [1, -1, -1])
     left_embedding = tf.reshape(left_embedding, [-1, word_dim])
     right_embedding = tf.reshape(right_embedding, [-1, word_dim])
-    sub = left_embedding-right_embedding
-    distance = tf.reduce_sum(sub*sub, 1)
+    sub = left_embedding - right_embedding
+    distance = tf.reduce_sum(sub * sub, 1)
     distance = tf.reshape(distance, [-1, 1])
-    pred = tf.layers.dense(distance,units=2, activation=tf.nn.sigmoid)
-    loss = tf.losses.mean_squared_error(y,pred)+loss_no_info#+loss_norm
+    pred = tf.layers.dense(distance, units=2, activation=tf.nn.sigmoid)
+    loss = tf.losses.mean_squared_error(y, pred) + loss_no_info  # +loss_norm
     optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
 
     return {
@@ -105,12 +106,11 @@ def embedding_sum_model_square_distance_v2(sen_dim, vocab_dim, word_dim):
     # word_vector_table = tf.scatter_nd_update(word_vector_table,indices,assign_value)
     tf.summary.histogram(name='word_vector', values=word_vector_table)
 
-    no_info_vector = tf.slice(word_vector_table,[0,0],[1,-1])
-    loss_no_info = tf.reduce_sum(no_info_vector*no_info_vector)
-    norm_word_embedding = tf.slice(word_vector_table,[1,0],[vocab_dim-1, word_dim])
-    norm_sub = tf.reduce_sum(norm_word_embedding*norm_word_embedding, 1)-1.0
-    loss_norm = tf.reduce_mean(norm_sub*norm_sub)
-
+    no_info_vector = tf.slice(word_vector_table, [0, 0], [1, -1])
+    loss_no_info = tf.reduce_sum(no_info_vector * no_info_vector)
+    norm_word_embedding = tf.slice(word_vector_table, [1, 0], [vocab_dim - 1, word_dim])
+    norm_sub = tf.reduce_sum(norm_word_embedding * norm_word_embedding, 1) - 1.0
+    loss_norm = tf.reduce_mean(norm_sub * norm_sub)
 
     # all_embedding -> [batch, 2, sen_dim, word_dim]
     all_embedding = tf.nn.embedding_lookup(word_vector_table, x)
@@ -124,11 +124,11 @@ def embedding_sum_model_square_distance_v2(sen_dim, vocab_dim, word_dim):
     right_embedding = tf.slice(trans_embedding, [1, 0, 0], [1, -1, -1])
     left_embedding = tf.reshape(left_embedding, [-1, word_dim])
     right_embedding = tf.reshape(right_embedding, [-1, word_dim])
-    sub = left_embedding-right_embedding
-    distance = tf.reduce_sum(sub*sub, 1)
+    sub = left_embedding - right_embedding
+    distance = tf.reduce_sum(sub * sub, 1)
     distance = tf.reshape(distance, [-1, 1])
-    pred = tf.layers.dense(distance,units=2, activation=tf.nn.sigmoid)
-    loss = tf.losses.mean_squared_error(y,pred)+loss_no_info#+0.1*loss_norm
+    pred = tf.layers.dense(distance, units=2, activation=tf.nn.sigmoid)
+    loss = tf.losses.mean_squared_error(y, pred) + loss_no_info  # +0.1*loss_norm
     optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
 
     return {
@@ -139,6 +139,9 @@ def embedding_sum_model_square_distance_v2(sen_dim, vocab_dim, word_dim):
         'opt': optimizer
     }
 
+#
+# def left_conv_embedding(left_embeddings):
+
 
 def embedding_cnn_model(sen_dim, vocab_dim, word_dim):
     x = tf.placeholder(dtype=tf.int32, shape=[None, 2, sen_dim], name="input")
@@ -146,15 +149,45 @@ def embedding_cnn_model(sen_dim, vocab_dim, word_dim):
 
     intialembedding = tf.random_normal(shape=[vocab_dim, word_dim], mean=0.0, stddev=0.1)
     word_vector_table = tf.Variable(intialembedding, name='word_vector')
-    regulizer = l2_regularizer(0.5)
-    loss_regularizer = regulizer(word_vector_table)
     tf.summary.histogram(name='embedding', values=word_vector_table)
+    no_info_vector = tf.slice(word_vector_table, [0, 0], [1, -1])
+    loss_no_info = tf.reduce_sum(no_info_vector * no_info_vector)
 
-    # all_embedding -> [batch, 2, sen_dim, word_dim]
     all_embedding = tf.nn.embedding_lookup(word_vector_table, x)
-    # sum_embedding ->[batch, 2, word_dim]
+    left_embeddings = tf.slice(all_embedding, [0, 0, 0, 0], [-1, 1, -1, -1])
+    right_embeddings = tf.slice(all_embedding, [0, 1, 0, 0], [-1, 1, -1, -1])
+
+    left_embeddings = tf.reshape(left_embeddings, [-1, sen_dim, word_dim])
+    left_conv_embeddings_2 = tf.layers.conv1d(left_embeddings, filters=40, kernel_size=3, strides=1, activation=tf.nn.relu,
+                            kernel_regularizer=l2_regularizer(0.5), bias_regularizer=l2_regularizer(0.5),
+                            kernel_initializer=tf.glorot_normal_initializer(),
+                            bias_initializer=tf.glorot_normal_initializer(), padding='SAME', name='conv_1d', reuse=None)
+    left_embedding = tf.reduce_sum(left_conv_embeddings_2,axis=1)
 
 
+    right_embeddings = tf.reshape(right_embeddings, [-1, sen_dim, word_dim])
+    right_conv_embeddings_2 = tf.layers.conv1d(right_embeddings, filters=40, kernel_size=3, strides=1,
+                                              activation=tf.nn.relu,
+                                              kernel_regularizer=l2_regularizer(0.5),
+                                              bias_regularizer=l2_regularizer(0.5),
+                                              kernel_initializer=tf.glorot_normal_initializer(),
+                                              bias_initializer=tf.glorot_normal_initializer(), padding='SAME',
+                                              name='conv_1d', reuse=True)
+    right_embedding = tf.reduce_sum(right_conv_embeddings_2, axis=1)
+    sub = left_embedding - right_embedding
+    distance = tf.reduce_sum(sub * sub, 1)
+    distance = tf.reshape(distance, [-1, 1])
+    pred = tf.layers.dense(distance, units=2, activation=tf.nn.sigmoid)
+    loss = tf.losses.mean_squared_error(y, pred) + loss_no_info  # +0.1*loss_norm
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+
+    return {
+        'x': x,
+        'y': y,
+        'loss': loss,
+        'pred': pred,
+        'opt': optimizer
+    }
 
 
     # # normalize_embedding->[batch, 2, word_dim]
@@ -182,5 +215,7 @@ def embedding_cnn_model(sen_dim, vocab_dim, word_dim):
     #     'opt': optimizer
     # }
 
+
 def cnn_layer(inputs):
-    tf.layers.conv1d(inputs,filters=40,kernel_size=5,strides=1,activation=tf.nn.relu,)
+    conv = tf.layers.conv1d(inputs, filters=40, kernel_size=5, strides=1, activation=tf.nn.relu,
+                            kernel_regularizer=l2_regularizer(1.0), bias_regularizer=l2_regularizer(1.0))

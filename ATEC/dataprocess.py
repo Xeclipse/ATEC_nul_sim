@@ -114,10 +114,12 @@ def preprocess():
         pair.remove_same_word()
     tp.saveDict(index_dic, char_dic_file)
     tp.savePickle(corpus,corpus_save_file)
+    print char_dic_file
 
+if __name__ == '__main__':
 
 # preprocess()
-# corpus = tp.loadPickle(corpus_save_file)
+    corpus = tp.loadPickle(corpus_save_file)
 # debug = 0
 #
 # with open('./cases.txt', 'w') as f:
@@ -147,3 +149,4 @@ def preprocess():
 #     data.append(pair.second_sen)
 # char_dic = tp.wordFrequency(data)
 # tp.saveDict(char_dic,char_dic_file)
+# print char_dic
