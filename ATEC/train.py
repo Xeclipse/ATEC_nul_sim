@@ -5,7 +5,7 @@ from dataprocess import Pair,csv_file, word_dic_file, corpus_save_file, char_dic
 import utils.textProcess as tp
 from NeuralNetworkUtils.utils.utils import split2Batches
 from model import embedding_sum_model, embedding_sum_model_square_distance, embedding_sum_model_square_distance_v2, \
-    embedding_cnn_model
+    embedding_cnn_model_projection_distance, embedding_hierarchical_cnn_model_distance
 import tensorflow as tf
 import numpy as np
 import random
@@ -98,7 +98,7 @@ index_dic = tp.loadPickle(char_dic_file)
 
 def train():
     with tf.Session() as sess:
-        net = embedding_cnn_model(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
+        net = embedding_hierarchical_cnn_model_distance(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
 
 
         sess.run(tf.global_variables_initializer())
@@ -129,7 +129,7 @@ def train():
 def predict(test_X, test_Y):
 
     with tf.Session() as sess:
-        net = embedding_cnn_model(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
+        net = embedding_hierarchical_cnn_model_distance(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
         loader = tf.train.Saver()
         loader.restore(sess,model_save_file)
         results = sess.run([net['pred']],
@@ -172,7 +172,7 @@ def test():
     pred = [np.argmax(i) for i in pred]
     label = [np.argmax(i) for i in test_Y]
     error_analysis(pred,label,test_corpus)
-#
+
 train_X = tp.loadPickle('./train_X')
 train_Y = tp.loadPickle('./train_Y')
 # train_X, train_Y = extra_train_data(train_X, train_Y, 10000)
@@ -180,6 +180,7 @@ train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
 train()
 
 # test()
+
 
 #
 # test_Y=tp.loadPickle('./test_Y')
