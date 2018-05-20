@@ -173,13 +173,13 @@ def test():
     label = [np.argmax(i) for i in test_Y]
     error_analysis(pred,label,test_corpus)
 
-train_X = tp.loadPickle('./train_X')
-train_Y = tp.loadPickle('./train_Y')
-# train_X, train_Y = extra_train_data(train_X, train_Y, 10000)
-train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
-train()
+# train_X = tp.loadPickle('./train_X')
+# train_Y = tp.loadPickle('./train_Y')
+# # train_X, train_Y = extra_train_data(train_X, train_Y, 10000)
+# train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
+# train()
 
-# test()
+test()
 
 
 #

@@ -1,6 +1,6 @@
 # coding:utf-8
 from collections import Counter
-
+from utils.structures import TrieTree, TrieTreeNode
 import jieba
 import utils.textProcess as tp
 
@@ -14,6 +14,9 @@ csv_file = './data/atec_nlp_sim_train.csv'
 word_dic_file = './data/processed_data/word_dic.dic'
 char_dic_file = './data/processed_data/char_dic.dic'
 corpus_save_file = './data/processed_data/corpus'
+
+
+
 
 class Pair:
     def __init__(self):
@@ -78,13 +81,27 @@ class Pair:
         ret += str(self.id)+'\n'
         ret += self.first_sen+'\n'
         ret += self.second_sen+'\n'
-        ret += u' '.join(self.cut_first_sen).encode('utf-8')+'\n'
-        ret += u' '.join(self.cut_second_sen).encode('utf-8')+'\n'
-        ret += u' '.join(self.remove_same_first_sen).encode('utf-8') + '\n'
-        ret += u' '.join(self.remove_same_second_sen).encode('utf-8') + '\n'
+        # ret += u' '.join(self.cut_first_sen).encode('utf-8')+'\n'
+        # ret += u' '.join(self.cut_second_sen).encode('utf-8')+'\n'
+        ret +='coincident_parts: '+u' '.join(self.coincidence_parts).encode('utf-8') + '\n'
         ret += str(self.label)+'\n'
         ret +='-'*20+'\n'
         return  ret
+
+    def pinyin(self):
+        pass
+
+    def format_sen(self, sen):
+        return sen.replace(r'\\d+', '$').replace('***', '&').decode('utf-8')
+
+    def find_coincident_parts(self):
+        first_sen_trie = TrieTree()
+        first_sen_trie.add_seq_suffix(self.format_sen(self.first_sen))
+        self.coincidence_parts =first_sen_trie.find_coincidences(self.format_sen(self.second_sen))
+        return self.coincidence_parts
+    def diff_parts(self):
+        pass
+
 
 
 def save_freq_dic(freq_sta):
@@ -116,10 +133,21 @@ def preprocess():
     tp.savePickle(corpus,corpus_save_file)
     print char_dic_file
 
-if __name__ == '__main__':
 
+def gen_coincidence_corpus():
+    corpus = []
+    with open(csv_file) as f:
+        corpus = [Pair(line) for line in f.readlines()]
+        for pair in corpus:
+            pair.find_coincident_parts()
+    with open('./conidence_parts','w') as f:
+        for pair in corpus:
+            f.write(pair.__str__()+'\n')
+
+if __name__ == '__main__':
+    gen_coincidence_corpus()
 # preprocess()
-    corpus = tp.loadPickle(corpus_save_file)
+#     corpus = tp.loadPickle(corpus_save_file)
 # debug = 0
 #
 # with open('./cases.txt', 'w') as f:

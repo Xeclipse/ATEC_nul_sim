@@ -326,8 +326,35 @@ def embedding_summing_cnn_pyramid(input, reuse=None):
                      kernel_initializer=tf.glorot_normal_initializer(),
                      bias_initializer=tf.glorot_normal_initializer(), padding='SAME',
                      name='conv_1d3', reuse=reuse)
-    ret = tf.reduce_max(conv_3,axis=1)
+    ret = tf.reduce_sum(conv_3,axis=1)
     return ret
+
+
+def embedding_summing_cnn_pyramid(input, reuse=None):
+    conv_1 = tf.layers.conv1d(input, filters=40, kernel_size=3, strides=1,
+                     activation=tf.nn.relu,
+                     kernel_regularizer=l2_regularizer(0.5),
+                     bias_regularizer=l2_regularizer(0.5),
+                     kernel_initializer=tf.glorot_normal_initializer(),
+                     bias_initializer=tf.glorot_normal_initializer(), padding='SAME',
+                     name='conv_1d', reuse=reuse)
+    conv_2 = tf.layers.conv1d(conv_1, filters=20, kernel_size=3, strides=1,
+                     activation=tf.nn.relu,
+                     kernel_regularizer=l2_regularizer(0.5),
+                     bias_regularizer=l2_regularizer(0.5),
+                     kernel_initializer=tf.glorot_normal_initializer(),
+                     bias_initializer=tf.glorot_normal_initializer(), padding='SAME',
+                     name='conv_1d2', reuse=reuse)
+    conv_3 = tf.layers.conv1d(conv_2, filters=5, kernel_size=3, strides=1,
+                     activation=tf.nn.relu,
+                     kernel_regularizer=l2_regularizer(0.5),
+                     bias_regularizer=l2_regularizer(0.5),
+                     kernel_initializer=tf.glorot_normal_initializer(),
+                     bias_initializer=tf.glorot_normal_initializer(), padding='SAME',
+                     name='conv_1d3', reuse=reuse)
+    ret = tf.reduce_sum(conv_3,axis=1)
+    return ret
+
 
 def embedding_hierarchical_cnn_model_distance(sen_dim, vocab_dim, word_dim):
     x = tf.placeholder(dtype=tf.int32, shape=[None, 2, sen_dim], name="input")
@@ -358,9 +385,10 @@ def embedding_hierarchical_cnn_model_distance(sen_dim, vocab_dim, word_dim):
 
     regulizer_loss = tf.reduce_sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
 
-    pred = tf.layers.dense(sub_2, units=2, activation=tf.nn.sigmoid)
+    dense = tf.layers.dense(sub_2, units=2, activation=tf.nn.sigmoid)
+    pred = tf.nn.softmax(dense, axis=1)
     loss = tf.losses.mean_squared_error(y, pred) + loss_no_info #+0.1*loss_norm+ 0.007*regulizer_loss
-    optimizer = tf.train.AdamOptimizer(learning_rate=0.0001).minimize(loss)
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
 
     return {
         'x': x,
