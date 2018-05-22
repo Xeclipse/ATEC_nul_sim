@@ -143,6 +143,9 @@ def embedding_sum_model_square_distance_v2(sen_dim, vocab_dim, word_dim):
 #
 # def left_conv_embedding(left_embeddings):
 
+def self_attentive_model(input):
+    tf.layers.dense(input, )
+
 
 def embedding_cnn_model_square_distance(sen_dim, vocab_dim, word_dim):
     x = tf.placeholder(dtype=tf.int32, shape=[None, 2, sen_dim], name="input")

@@ -8,7 +8,7 @@ jieba.add_word("花呗", freq=100000)
 jieba.add_word("借呗", freq=100000)
 jieba.add_word("外卖", freq=100000)
 jieba.add_word("闲鱼", freq=100000)
-
+jieba.add_word("更改", freq=100000)
 
 csv_file = './data/atec_nlp_sim_train.csv'
 word_dic_file = './data/processed_data/word_dic.dic'
@@ -27,8 +27,8 @@ class Pair:
 
     def __init__(self, id, sen1, sen2, label):
         self.id = id
-        self.first_sen = sen1
-        self.second_sen = sen2
+        self.first_sen = sen1.replace('***','&')
+        self.second_sen = sen2.replace('***','&')
         self.label = label
 
     def cut_word(self):
@@ -46,9 +46,9 @@ class Pair:
         return self.cut_first_sen_filtered, self.cut_second_sen
 
     def index(self, index_dic):
-        self.index_first_sen = tp.indexSentence(sentence=self.first_sen.decode('utf-8'), dic=index_dic, addDict=False,
+        self.index_first_sen = tp.indexSentence(sentence=self.cut_first_sen.decode('utf-8'), dic=index_dic, addDict=False,
                                                 unknownIndex=1)[0]
-        self.index_second_sen = tp.indexSentence(sentence=self.second_sen.decode('utf-8'), dic=index_dic, addDict=False,
+        self.index_second_sen = tp.indexSentence(sentence=self.cut_second_sen.decode('utf-8'), dic=index_dic, addDict=False,
                                                  unknownIndex=1)[0]
         return self.index_first_sen, self.index_second_sen
 
@@ -74,15 +74,13 @@ class Pair:
         self.padding_index_second_sen = tp.padding(self.index_second_sen, padding_len)
         return self.padding_index_first_sen, self.padding_index_second_sen
 
-    def char_spilt(self):
-        pass
     def __str__(self):
         ret =''
         ret += str(self.id)+'\n'
         ret += self.first_sen+'\n'
         ret += self.second_sen+'\n'
-        # ret += u' '.join(self.cut_first_sen).encode('utf-8')+'\n'
-        # ret += u' '.join(self.cut_second_sen).encode('utf-8')+'\n'
+        ret += u' '.join(self.cut_first_sen).encode('utf-8')+'\n'
+        ret += u' '.join(self.cut_second_sen).encode('utf-8')+'\n'
         ret +='coincident_parts: '+u' '.join(self.coincidence_parts).encode('utf-8') + '\n'
         ret += str(self.label)+'\n'
         ret +='-'*20+'\n'
@@ -103,6 +101,11 @@ class Pair:
         pass
 
 
+    def gen_pinyin(self):
+        self.first_sen_pinyin=[]
+        self.second_sen_pinyin=[]
+
+
 
 def save_freq_dic(freq_sta):
     freq_items = sorted(freq_sta.items(), key=lambda x: x[1], reverse=True)
@@ -117,10 +120,10 @@ def preprocess():
     freq_sta = Counter()
     for pair in corpus:
         pair.cut_word()
-        freq_sta.update(pair.first_sen.decode('utf-8'))
-        freq_sta.update(pair.second_sen.decode('utf-8'))
+        freq_sta.update(pair.cut_first_sen.decode('utf-8'))
+        freq_sta.update(pair.cut_second_sen.decode('utf-8'))
     # freq_sta = tp.loadDict(char_dic_file)
-    index_dic_items = [i for i in freq_sta.items() if i[1] > 5]
+    index_dic_items = [i for i in freq_sta.items() if i[1] > 10]
     index_dic = tp.items2Dic(index_dic_items)
     index_dic = tp.sortDicByKeyAndReindex(index_dic, startIndex=2)
 
@@ -145,7 +148,12 @@ def gen_coincidence_corpus():
             f.write(pair.__str__()+'\n')
 
 if __name__ == '__main__':
-    gen_coincidence_corpus()
+    pairs = tp.loadPickle(corpus_save_file)
+
+
+
+    # suffix_tree = TrieTree()
+    # gen_coincidence_corpus()
 # preprocess()
 #     corpus = tp.loadPickle(corpus_save_file)
 # debug = 0
