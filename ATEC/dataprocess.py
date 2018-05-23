@@ -46,9 +46,9 @@ class Pair:
         return self.cut_first_sen_filtered, self.cut_second_sen
 
     def index(self, index_dic):
-        self.index_first_sen = tp.indexSentence(sentence=self.cut_first_sen.decode('utf-8'), dic=index_dic, addDict=False,
+        self.index_first_sen = tp.indexSentence(sentence=self.cut_first_sen, dic=index_dic, addDict=False,
                                                 unknownIndex=1)[0]
-        self.index_second_sen = tp.indexSentence(sentence=self.cut_second_sen.decode('utf-8'), dic=index_dic, addDict=False,
+        self.index_second_sen = tp.indexSentence(sentence=self.cut_second_sen, dic=index_dic, addDict=False,
                                                  unknownIndex=1)[0]
         return self.index_first_sen, self.index_second_sen
 
@@ -81,7 +81,7 @@ class Pair:
         ret += self.second_sen+'\n'
         ret += u' '.join(self.cut_first_sen).encode('utf-8')+'\n'
         ret += u' '.join(self.cut_second_sen).encode('utf-8')+'\n'
-        ret +='coincident_parts: '+u' '.join(self.coincidence_parts).encode('utf-8') + '\n'
+        # ret +='coincident_parts: '+u' '.join(self.coincidence_parts).encode('utf-8') + '\n'
         ret += str(self.label)+'\n'
         ret +='-'*20+'\n'
         return  ret
@@ -120,8 +120,8 @@ def preprocess():
     freq_sta = Counter()
     for pair in corpus:
         pair.cut_word()
-        freq_sta.update(pair.cut_first_sen.decode('utf-8'))
-        freq_sta.update(pair.cut_second_sen.decode('utf-8'))
+        freq_sta.update(pair.cut_first_sen)
+        freq_sta.update(pair.cut_second_sen)
     # freq_sta = tp.loadDict(char_dic_file)
     index_dic_items = [i for i in freq_sta.items() if i[1] > 10]
     index_dic = tp.items2Dic(index_dic_items)
@@ -148,13 +148,13 @@ def gen_coincidence_corpus():
             f.write(pair.__str__()+'\n')
 
 if __name__ == '__main__':
-    pairs = tp.loadPickle(corpus_save_file)
+    # pairs = tp.loadPickle(corpus_save_file)
 
 
 
     # suffix_tree = TrieTree()
     # gen_coincidence_corpus()
-# preprocess()
+    preprocess()
 #     corpus = tp.loadPickle(corpus_save_file)
 # debug = 0
 #
