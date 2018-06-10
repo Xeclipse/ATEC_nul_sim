@@ -273,7 +273,7 @@ def embedding_cnn_model_square_distance(sen_dim, vocab_dim, word_dim):
     distance = tf.reduce_sum(sub * sub, 1)
     distance = tf.reshape(distance, [-1, 1])
     pred = tf.layers.dense(distance, units=2, activation=tf.nn.sigmoid)
-    loss = tf.losses.mean_squared_error(y, pred) + loss_no_info + 0.1 * loss_norm + 0.007 * regulizer_loss
+    loss = tf.losses.mean_squared_error(y, pred) + loss_no_info  + 0.07 * regulizer_loss
     optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
 
     return {
@@ -455,3 +455,9 @@ def embedding_hierarchical_cnn_model_distance(sen_dim, vocab_dim, word_dim):
 def cnn_layer(inputs):
     conv = tf.layers.conv1d(inputs, filters=40, kernel_size=5, strides=1, activation=tf.nn.relu,
                             kernel_regularizer=l2_regularizer(1.0), bias_regularizer=l2_regularizer(1.0))
+
+
+
+def mcdonald_model(sen_dim, vocab_dim,word_dim):
+    with tf.name_scope('embedding_sum_model'):
+        net_embedding_sum = embedding_sum_model_square_distance(sen_dim,vocab_dim, word_dim)

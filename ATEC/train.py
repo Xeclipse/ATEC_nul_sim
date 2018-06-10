@@ -1,19 +1,18 @@
 # coding:utf-8
 import random
 
-from dataprocess import Pair,csv_file, word_dic_file, corpus_save_file, char_dic_file
+from dataprocess import Pair, csv_file, word_dic_file, corpus_save_file, char_dic_file
 import utils.textProcess as tp
 from NeuralNetworkUtils.utils.utils import split2Batches
 from model import embedding_sum_model, embedding_sum_model_square_distance, embedding_sum_model_square_distance_v2, \
-    embedding_cnn_model_projection_distance, embedding_hierarchical_cnn_model_distance,self_attentive_model
+    embedding_cnn_model_projection_distance, embedding_hierarchical_cnn_model_distance, self_attentive_model, \
+    embedding_cnn_model_square_distance
 import tensorflow as tf
 import numpy as np
 import random
 
-
-tensorboard_path='./data/tensorboard'
-model_save_file='./data/mode_save/sum_word_embedding'
-
+tensorboard_path = './data/tensorboard'
+model_save_file = './data/mode_save/sum_word_embedding'
 
 
 #
@@ -54,30 +53,42 @@ def statistic_correct(pred, label):
                 FN += 1
     return TP, TN, FP, FN
 
+
 def measure(TP, TN, FP, FN):
-    if TP+TN+FP+FN==0: acc=0
-    else: acc = 1.0 * (TP + TN) / (TP+TN+FP+FN)
-    if TP + FP==0: precision =0
-    else: precision = 1.0 * TP / (TP + FP)
-    if TP + FN==0:recall=0
-    else:recall = 1.0 * TP / (TP + FN)
-    if precision+recall==0: f1=0
-    else: f1 = 2 * precision * recall / (precision + recall)
-    return acc,precision,recall,f1
+    if TP + TN + FP + FN == 0:
+        acc = 0
+    else:
+        acc = 1.0 * (TP + TN) / (TP + TN + FP + FN)
+    if TP + FP == 0:
+        precision = 0
+    else:
+        precision = 1.0 * TP / (TP + FP)
+    if TP + FN == 0:
+        recall = 0
+    else:
+        recall = 1.0 * TP / (TP + FN)
+    if precision + recall == 0:
+        f1 = 0
+    else:
+        f1 = 2 * precision * recall / (precision + recall)
+    return acc, precision, recall, f1
 
 
-def extra_train_data(train_X, train_Y, count = 100000):
+def extra_train_data(train_X, train_Y, count=100000):
     length = len(train_X)
     for i in range(count):
         f = random.randint(0, length)
         s = random.randint(0, length)
-        if f!=s:
+        if f != s:
             train_X.append([train_X[f][0], train_X[s][0]])
-            train_Y.append([1.0,0.0])
+            train_Y.append([1.0, 0.0])
     return train_X, train_Y
+
 
 # corpus = tp.loadPickle(corpus_save_file)
 index_dic = tp.loadPickle(char_dic_file)
+
+
 # train_X, train_Y = build_train_set()
 # train_Y = [[i] for i in train_Y]
 # train_Y = tp.oneHotLabels(train_Y, 1)
@@ -98,8 +109,7 @@ index_dic = tp.loadPickle(char_dic_file)
 
 def train():
     with tf.Session() as sess:
-        net = self_attentive_model(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
-
+        net = embedding_cnn_model_square_distance(sen_dim=30, vocab_dim=len(index_dic) + 2, word_dim=50)
 
         sess.run(tf.global_variables_initializer())
         summary = tf.summary.FileWriter(tensorboard_path)
@@ -107,7 +117,7 @@ def train():
         obop = tf.summary.merge_all()
         for epoch in range(50):
             sta = [0] * 5
-            for i in range(batch_num-1):
+            for i in range(batch_num - 1):
                 results = sess.run([net['loss'], net['opt'], net['pred']],
                                    feed_dict={net['x']: train_X[i], net['y']: train_Y[i]})
                 sta[0] += results[0]
@@ -116,8 +126,8 @@ def train():
                     sta[cnt] += mea[cnt - 1]
             ops = sess.run(obop)
             summary.add_summary(ops, epoch)
-            acc,precision,recall, f1 =measure(sta[1],sta[2],sta[3],sta[4])
-            print 'epoch-> ',epoch,'loss:', 1.0 * sta[0] / batch_num
+            acc, precision, recall, f1 = measure(sta[1], sta[2], sta[3], sta[4])
+            print 'epoch-> ', epoch, 'loss:', 1.0 * sta[0] / batch_num
             print '\tacc:', acc,
             print '\tprecision:', precision,
             print '\trecall:', recall,
@@ -126,17 +136,17 @@ def train():
         saver.save(sess, model_save_file)
         print 'model saved'
 
-def predict(test_X, test_Y):
 
+def predict(test_X, test_Y):
     with tf.Session() as sess:
-        net = self_attentive_model(sen_dim=70, vocab_dim=len(index_dic) + 2, word_dim=50)
+        net = embedding_cnn_model_square_distance(sen_dim=30, vocab_dim=len(index_dic) + 2, word_dim=50)
         loader = tf.train.Saver()
-        loader.restore(sess,model_save_file)
+        loader.restore(sess, model_save_file)
         results = sess.run([net['pred']],
-                                   feed_dict={net['x']: test_X})
+                           feed_dict={net['x']: test_X})
         if not test_Y is None:
-            a,b,c,d = statistic_correct(results[0], test_Y)
-            acc, precision, recall, f1 = measure(a,b,c,d)
+            a, b, c, d = statistic_correct(results[0], test_Y)
+            acc, precision, recall, f1 = measure(a, b, c, d)
 
             print '\tacc:', acc,
             print '\tprecision:', precision,
@@ -144,22 +154,23 @@ def predict(test_X, test_Y):
             print '\tf1:', f1
         return results[0]
 
+
 def error_analysis(pred, label, test_corpus):
-    with open('./error_cases_TP','w') as f:
+    with open('./error_cases_TP', 'w') as f:
         for i in range(len(pred)):
-            if pred[i] == label[i] and label[i]==1:
+            if pred[i] == label[i] and label[i] == 1:
                 f.write(str(test_corpus[i]))
-    with open('./error_cases_TN','w') as f:
+    with open('./error_cases_TN', 'w') as f:
         for i in range(len(pred)):
-            if pred[i] == label[i] and label[i]==0:
+            if pred[i] == label[i] and label[i] == 0:
                 f.write(str(test_corpus[i]))
-    with open('./error_cases_FP','w') as f:
+    with open('./error_cases_FP', 'w') as f:
         for i in range(len(pred)):
-            if pred[i] != label[i] and label[i]==0:
+            if pred[i] != label[i] and label[i] == 0:
                 f.write(str(test_corpus[i]))
-    with open('./error_cases_FN','w') as f:
+    with open('./error_cases_FN', 'w') as f:
         for i in range(len(pred)):
-            if pred[i] != label[i] and label[i]==1:
+            if pred[i] != label[i] and label[i] == 1:
                 f.write(str(test_corpus[i]))
 
 
@@ -171,15 +182,17 @@ def test():
     pred = predict(test_X, test_Y)
     pred = [np.argmax(i) for i in pred]
     label = [np.argmax(i) for i in test_Y]
-    error_analysis(pred,label,test_corpus)
+    error_analysis(pred, label, test_corpus)
 
-train_X = tp.loadPickle('./train_X')
-train_Y = tp.loadPickle('./train_Y')
-# train_X, train_Y = extra_train_data(train_X, train_Y, 10000)
-train_X, train_Y, batch_num = split2Batches(50, train_X, train_Y)
-train()
 
-# test()
+if __name__ == '__main__':
+    # train_X = tp.loadPickle('./train_X')
+    # train_Y = tp.loadPickle('./train_Y')
+    # # train_X, train_Y = extra_train_data(train_X, train_Y, 10000)
+    # train_X, train_Y, batch_num = split2Batches(20, train_X, train_Y)
+    # train()
+
+    test()
 
 
 #
